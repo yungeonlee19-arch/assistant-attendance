@@ -1,0 +1,13 @@
+name: SMS Cron
+
+on:
+  schedule:
+    - cron: '* * * * *'
+
+jobs:
+  send-sms:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call SMS API
+        run: |
+          curl https://assistant-attendance-ecah0z87k-lee123123.vercel.app/api/send-sms
