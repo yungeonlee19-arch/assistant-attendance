@@ -35,6 +35,7 @@ export async function GET() {
         to: staffPhone,
         from: process.env.COOLSMS_SENDER!,
         text: `[출근 알림] ${staffName}님, 30분 후 ${branch}팀 출근 예정입니다. 준비해주세요!`,
+        autoTypeDetect: true,
       });
     }
   }
