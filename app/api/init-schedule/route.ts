@@ -11,11 +11,12 @@ export async function GET() {
     return NextResponse.json({ message: "스태프 없음" });
   }
 
+  const list = staffList;
+
   function getStaffId(name: string) {
-    return staffList.find((s) => s.name.trim() === name)?.id;
+    return list.find((s) => s.name.trim() === name)?.id;
   }
 
-  // 요일별 고정 근무자 (0=일, 1=월, 2=화, 3=수, 4=목, 5=금, 6=토)
   const fixedSchedule: { day: number; name: string; branch: string }[] = [
     { day: 1, name: "박태양", branch: "강남" },
     { day: 1, name: "박시현", branch: "신촌" },
@@ -30,7 +31,6 @@ export async function GET() {
   const today = new Date();
   const schedules = [];
 
-  // 4주치 생성
   for (let i = 0; i < 28; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
