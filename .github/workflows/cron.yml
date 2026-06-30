@@ -10,4 +10,4 @@ jobs:
     steps:
       - name: Call SMS API
         run: |
-          curl https://assistant-attendance-ecah0z87k-lee123123.vercel.app/api/send-sms
+          curl https://sparkly-madeleine-5f03bc.netlify.app/api/send-sms

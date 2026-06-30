@@ -18,7 +18,6 @@ export default function Home() {
   const [selectedStaff, setSelectedStaff] = useState("");
 
 
-  // 조교 목록 가져오기
   useEffect(() => {
 
     async function getStaff() {
@@ -46,6 +45,21 @@ export default function Home() {
 
 
 
+  function getKoreaTime() {
+
+    const now = new Date();
+
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+
+    const koreaTime = new Date(utc + (9 * 60 * 60000));
+
+    return koreaTime;
+
+  }
+
+
+
+
   async function checkIn() {
 
 
@@ -57,7 +71,7 @@ export default function Home() {
     }
 
 
-    const now = new Date();
+    const now = getKoreaTime();
 
 
 
