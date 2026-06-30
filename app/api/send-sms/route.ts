@@ -13,14 +13,21 @@ function getKoreaTime() {
   return new Date(utc + 9 * 60 * 60000);
 }
 
+function toHHMM(date: Date) {
+  return (
+    String(date.getHours()).padStart(2, "0") +
+    ":" +
+    String(date.getMinutes()).padStart(2, "0") +
+    ":00"
+  );
+}
+
 export async function GET() {
 
   const koreaNow = getKoreaTime();
 
-  const thirtyMinutesLater = new Date(koreaNow.getTime() + 30 * 60 * 1000);
-
-  const targetHour = String(thirtyMinutesLater.getHours()).padStart(2, "0");
-  const targetMinute = String(thirtyMinutesLater.getMinutes()).padStart(2, "0");
+  const rangeStart = new Date(koreaNow.getTime() + 25 * 60 * 1000);
+  const rangeEnd = new Date(koreaNow.getTime() + 35 * 60 * 1000);
 
   const todayStr = koreaNow.toISOString().split("T")[0];
 
@@ -28,14 +35,30 @@ export async function GET() {
     .from("schedule")
     .select("*, staff(*)")
     .eq("date", todayStr)
-    .gte("start_time", `${targetHour}:${targetMinute}:00`)
-    .lt("start_time", `${targetHour}:${targetMinute}:59`);
+    .gte("start_time", toHHMM(rangeStart))
+    .lte("start_time", toHHMM(rangeEnd));
 
   if (!schedules || schedules.length === 0) {
-    return NextResponse.json({ message: "알림 대상 없음", checkedTime: `${targetHour}:${targetMinute}` });
+    return NextResponse.json({
+      message: "알림 대상 없음",
+      rangeStart: toHHMM(rangeStart),
+      rangeEnd: toHHMM(rangeEnd),
+    });
   }
 
+  const { data: alreadySent } = await supabase
+    .from("sms_log")
+    .select("schedule_id")
+    .eq("date", todayStr);
+
+  const sentIds = new Set((alreadySent || []).map((r) => r.schedule_id));
+
+  let sentCount = 0;
+
   for (const schedule of schedules) {
+
+    if (sentIds.has(schedule.id)) continue;
+
     const staffPhone = schedule.staff?.phone?.trim();
     const staffName = schedule.staff?.name?.trim();
     const branch = schedule.branch;
@@ -47,8 +70,17 @@ export async function GET() {
         text: `[출근 알림] ${staffName}님, 30분 후 ${branch}팀 출근 예정입니다. 준비해주세요!`,
         autoTypeDetect: true,
       });
+
+      await supabase.from("sms_log").insert([
+        {
+          schedule_id: schedule.id,
+          date: todayStr,
+        },
+      ]);
+
+      sentCount++;
     }
   }
 
-  return NextResponse.json({ message: "발송 완료", count: schedules.length });
+  return NextResponse.json({ message: "발송 완료", count: sentCount });
 }
