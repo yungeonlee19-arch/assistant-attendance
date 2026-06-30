@@ -19,6 +19,7 @@ type Staff = {
 type Attendance = {
   staff_id: string;
   check_in: string;
+  photo_url?: string;
 };
 
 export default function ManagerPage() {
@@ -47,7 +48,8 @@ export default function ManagerPage() {
       const { data: attendanceData } =
         await supabase
           .from("attendance")
-          .select("*");
+          .select("*")
+          .eq("date", today);
 
       setScheduleList(scheduleData || []);
       setStaffList(staffData || []);
@@ -66,6 +68,19 @@ export default function ManagerPage() {
     start.setHours(hour);
     start.setMinutes(minute);
     return now > start;
+  }
+
+  function formatTime(isoString: string) {
+
+    const date = new Date(isoString);
+
+    return date.toLocaleTimeString("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Seoul",
+    });
+
   }
 
   function renderTeam(branch: string) {
@@ -92,21 +107,44 @@ export default function ManagerPage() {
                 key={item.id}
                 className="bg-white rounded-2xl shadow p-5"
               >
-                <div className="flex justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold">
-                      {staff?.name}
-                    </h3>
-                    <p className="text-gray-500">
-                      예정 출근 : {item.start_time}
-                    </p>
+                <div className="flex justify-between items-center">
+
+                  <div className="flex items-center gap-4">
+
+                    {
+
+                      attendance?.photo_url && (
+
+                        <img
+
+                          src={attendance.photo_url}
+
+                          alt="출근 사진"
+
+                          className="w-14 h-14 rounded-lg object-cover border"
+
+                        />
+
+                      )
+
+                    }
+
+                    <div>
+                      <h3 className="text-xl font-bold">
+                        {staff?.name}
+                      </h3>
+                      <p className="text-gray-500">
+                        예정 출근 : {item.start_time}
+                      </p>
+                    </div>
+
                   </div>
 
                   {attendance ? (
-                    <div className="text-green-600 font-bold">
+                    <div className="text-green-600 font-bold text-right">
                       ✅ 출근
                       <p className="text-sm">
-                        {new Date(attendance.check_in).toLocaleTimeString()}
+                        {formatTime(attendance.check_in)}
                       </p>
                     </div>
                   ) : late ? (

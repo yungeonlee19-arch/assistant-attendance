@@ -16,6 +16,9 @@ export default function Home() {
 
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [selectedStaff, setSelectedStaff] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
 
   useEffect(() => {
@@ -58,6 +61,24 @@ export default function Home() {
 
 
 
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      return;
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+
+  }
+
+
+
+
   async function checkIn() {
 
 
@@ -69,7 +90,58 @@ export default function Home() {
     }
 
 
+    if(!photoFile){
+
+      alert("출근 사진을 촬영해주세요");
+      return;
+
+    }
+
+
+    setUploading(true);
+
+
     const now = new Date();
+
+    const fileExt = photoFile.name.split(".").pop();
+
+    const fileName = `${selectedStaff}_${now.getTime()}.${fileExt}`;
+
+
+    const { error: uploadError } = await supabase
+
+      .storage
+
+      .from("attendance-photos")
+
+      .upload(fileName, photoFile);
+
+
+    if(uploadError){
+
+      alert("사진 업로드 실패");
+
+      console.log(uploadError);
+
+      setUploading(false);
+
+      return;
+
+    }
+
+
+    const { data: publicUrlData } =
+
+      supabase
+
+      .storage
+
+      .from("attendance-photos")
+
+      .getPublicUrl(fileName);
+
+
+    const photoUrl = publicUrlData.publicUrl;
 
 
 
@@ -87,7 +159,9 @@ export default function Home() {
 
           check_in: now.toISOString(),
 
-          status: "출근"
+          status: "출근",
+
+          photo_url: photoUrl
 
         }
 
@@ -102,11 +176,18 @@ export default function Home() {
 
       console.log(error);
 
+      setUploading(false);
+
       return;
 
     }
 
 
+    setUploading(false);
+
+    setPhotoFile(null);
+
+    setPhotoPreview(null);
 
     alert("출근 완료!");
 
@@ -186,17 +267,60 @@ export default function Home() {
 
 
 
+        <p className="mb-2">
+
+          출근 사진 촬영
+
+        </p>
+
+
+        <input
+
+          type="file"
+
+          accept="image/*"
+
+          capture="environment"
+
+          onChange={handlePhotoChange}
+
+          className="w-full border p-3 rounded-lg mb-3"
+
+        />
+
+
+        {
+
+          photoPreview && (
+
+            <img
+
+              src={photoPreview}
+
+              alt="미리보기"
+
+              className="w-full h-48 object-cover rounded-lg mb-5"
+
+            />
+
+          )
+
+        }
+
+
 
 
         <button
 
           onClick={checkIn}
 
-          className="w-full bg-black text-white py-3 rounded-xl"
+          disabled={uploading}
+
+          className="w-full bg-black text-white py-3 rounded-xl disabled:bg-gray-400"
 
         >
 
-          출근 체크
+          {uploading ? "업로드 중..." : "출근 체크"}
 
         </button>
 
