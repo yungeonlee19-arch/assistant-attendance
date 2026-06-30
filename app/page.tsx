@@ -45,15 +45,13 @@ export default function Home() {
 
 
 
-  function getKoreaTime() {
+  function getKoreaDateString() {
 
     const now = new Date();
 
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-
-    const koreaTime = new Date(utc + (9 * 60 * 60000));
-
-    return koreaTime;
+    return now.toLocaleDateString("sv-SE", {
+      timeZone: "Asia/Seoul",
+    });
 
   }
 
@@ -71,7 +69,7 @@ export default function Home() {
     }
 
 
-    const now = getKoreaTime();
+    const now = new Date();
 
 
 
@@ -85,7 +83,7 @@ export default function Home() {
 
           staff_id: selectedStaff,
 
-          date: now.toISOString().split("T")[0],
+          date: getKoreaDateString(),
 
           check_in: now.toISOString(),
 
